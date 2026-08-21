@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { sortDiagnostics } from '@learntree/core';
+import { ConnectGitHub } from '../components/setup/ConnectGitHub.tsx';
 import { localFolderSupported } from '../providers/LocalFolderProvider.ts';
 import { useAppStore } from '../state/store.ts';
 
@@ -15,6 +17,7 @@ export function SettingsPage() {
   const switchToSample = useAppStore((s) => s.useSampleProvider);
   const connectLocal = useAppStore((s) => s.connectLocalFolder);
   const disconnect = useAppStore((s) => s.disconnect);
+  const [showGitHubForm, setShowGitHubForm] = useState(false);
 
   const button =
     'rounded-md border border-neutral-300 px-3 py-1.5 text-[13px] font-medium hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40';
@@ -50,8 +53,12 @@ export function SettingsPage() {
               >
                 Open local folder…
               </button>
-              <button type="button" className={button} disabled title="Arrives in M5">
-                Connect GitHub repo… (soon)
+              <button
+                type="button"
+                className={button}
+                onClick={() => setShowGitHubForm((v) => !v)}
+              >
+                Connect GitHub repo…
               </button>
               {provider.kind !== 'sample' && (
                 <button type="button" className={button} onClick={() => void disconnect()}>
@@ -59,10 +66,11 @@ export function SettingsPage() {
                 </button>
               )}
             </div>
+            {showGitHubForm && <ConnectGitHub onDone={() => setShowGitHubForm(false)} />}
             {!localFolderSupported() && (
               <p className="text-neutral-500">
-                Local folder mode needs a Chromium browser (Chrome/Edge/Arc). GitHub mode (M5)
-                will work everywhere.
+                Local folder mode needs a Chromium browser (Chrome/Edge/Arc). GitHub mode works
+                everywhere, including phones.
               </p>
             )}
             <p className="text-neutral-500">

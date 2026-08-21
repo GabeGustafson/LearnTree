@@ -17,6 +17,11 @@ export interface StorageProvider {
   /**
    * `expectedVersion` implements optimistic concurrency where the backend
    * supports it (GitHub blob sha); providers without versioning ignore it.
+   * `message` becomes the commit message on backends that have one.
    */
-  writeProgress(text: string, expectedVersion: string | null): Promise<WriteResult>;
+  writeProgress(
+    text: string,
+    expectedVersion: string | null,
+    message?: string,
+  ): Promise<WriteResult>;
 }

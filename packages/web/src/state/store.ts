@@ -1,10 +1,5 @@
 import { create } from 'zustand';
-import type {
-  Diagnostic,
-  ModuleId,
-  ProgressState,
-  ResolvedForest,
-} from '@learntree/core';
+import type { Diagnostic, ModuleId, ProgressState, ResolvedForest } from '@learntree/core';
 import {
   emptyProgressState,
   mergeProgress,
@@ -14,10 +9,16 @@ import {
   setModuleState,
   writeThroughAliases,
 } from '@learntree/core';
-import { resolveWithLastGood } from './lastGood.ts';
 import type { StorageProvider } from '../providers/StorageProvider.ts';
 import { LocalFolderProvider, localFolderSupported } from '../providers/LocalFolderProvider.ts';
 import { SampleProvider } from '../providers/SampleProvider.ts';
+import { GitHubProvider } from '../providers/GitHubProvider.ts';
+import type { GitHubConfig } from '../providers/githubApi.ts';
+import {
+  clearGitHubConfig,
+  loadGitHubConfig,
+  saveGitHubConfig,
+} from '../providers/githubSettings.ts';
 import {
   clearLocalHandle,
   getProviderChoice,
@@ -25,10 +26,15 @@ import {
   saveLocalHandle,
   setProviderChoice,
 } from '../providers/settings.ts';
+import type { SyncStatus } from '../sync/SyncController.ts';
+import {
+  GITHUB_SYNC_OPTIONS,
+  LOCAL_SYNC_OPTIONS,
+  SyncController,
+} from '../sync/SyncController.ts';
 
 export type Connection =
   | { state: 'ok' }
-  /** A persisted local-folder handle needs a user-gesture permission grant. */
   | { state: 'needs-permission'; pending: LocalFolderProvider }
   | { state: 'error'; detail: string };
 
@@ -41,6 +47,7 @@ export interface AppState {
   staleFiles: string[];
   progress: ProgressState;
   progressVersion: string | null;
+  sync: { status: SyncStatus; detail?: string | undefined };
   selected: { treeId: string; nodeId: string } | null;
 
   initialize(): Promise<void>;
@@ -48,45 +55,50 @@ export interface AppState {
   maybeReloadOnFocus(): void;
   useSampleProvider(): Promise<void>;
   connectLocalFolder(): Promise<void>;
+  connectGitHub(cfg: GitHubConfig): Promise<void>;
   reconnectLocal(): Promise<void>;
   disconnect(): Promise<void>;
+  flushSync(): Promise<void>;
   toggleModule(id: ModuleId, done: boolean): void;
   select(treeId: string, nodeId: string | null): void;
 }
 
+import { resolveWithLastGood } from './lastGood.ts';
+
 /** Last version of each file that passed parse+schema (per session). */
 const lastGood = new Map<string, string>();
 let lastLoadAt = 0;
-let persistTimer: ReturnType<typeof setTimeout> | null = null;
+let controller: SyncController | null = null;
 
 const FOCUS_RELOAD_MIN_MS = 5_000;
-const PERSIST_DEBOUNCE_MS = 600;
 
 function mirrorKey(provider: StorageProvider): string {
   return `learntree.progressCache.${provider.cacheKey}`;
 }
 
 export const useAppStore = create<AppState>((set, get) => {
-  function flushPersist(): void {
-    if (persistTimer !== null) {
-      clearTimeout(persistTimer);
-      persistTimer = null;
-    }
-    const { provider, progress, progressVersion } = get();
-    if (!provider.capabilities.write || progress.corrupt) return;
-    void provider.writeProgress(serializeProgressState(progress), progressVersion).then((res) => {
-      if (res.ok) set({ progressVersion: res.version });
-    });
-  }
-
-  function schedulePersist(): void {
-    if (persistTimer !== null) clearTimeout(persistTimer);
-    persistTimer = setTimeout(flushPersist, PERSIST_DEBOUNCE_MS);
+  function attachController(provider: StorageProvider): void {
+    controller?.dispose();
+    controller = new SyncController(
+      provider,
+      {
+        read: () => ({ progress: get().progress, version: get().progressVersion }),
+        applyWrite: (version) => set({ progressVersion: version }),
+        applyMerged: (progress, version) => {
+          set({ progress, progressVersion: version });
+          if (!progress.corrupt) {
+            localStorage.setItem(mirrorKey(provider), serializeProgressState(progress));
+          }
+        },
+        onStatus: (status, detail) => set({ sync: { status, detail } }),
+      },
+      provider.kind === 'github' ? GITHUB_SYNC_OPTIONS : LOCAL_SYNC_OPTIONS,
+    );
   }
 
   if (typeof document !== 'undefined') {
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden' && persistTimer !== null) flushPersist();
+      if (document.visibilityState === 'hidden') void controller?.flushNow();
     });
   }
 
@@ -118,6 +130,7 @@ export const useAppStore = create<AppState>((set, get) => {
       );
       progress = migrated.state;
 
+      attachController(provider);
       set({
         provider,
         loading: false,
@@ -130,13 +143,16 @@ export const useAppStore = create<AppState>((set, get) => {
         staleFiles,
         progress,
         progressVersion: version,
+        sync: { status: 'synced' },
       });
       lastLoadAt = Date.now();
 
       if (!progress.corrupt) {
         localStorage.setItem(mirrorKey(provider), serializeProgressState(progress));
         // Backend behind the merged state (crash recovery, alias migration) → write back.
-        if (serializeProgressState(progress) !== (progressText ?? '')) schedulePersist();
+        if (serializeProgressState(progress) !== (progressText ?? '')) {
+          controller?.notifyChange();
+        }
       }
     } catch (err) {
       set({ loading: false, connection: { state: 'error', detail: String(err) } });
@@ -152,10 +168,18 @@ export const useAppStore = create<AppState>((set, get) => {
     staleFiles: [],
     progress: emptyProgressState(),
     progressVersion: null,
+    sync: { status: 'synced' },
     selected: null,
 
     async initialize() {
       const choice = getProviderChoice();
+      if (choice === 'github') {
+        const cfg = loadGitHubConfig();
+        if (cfg !== null) {
+          await loadAll(new GitHubProvider(cfg), true);
+          return;
+        }
+      }
       if (choice === 'local' && localFolderSupported()) {
         const saved = await loadLocalHandle();
         if (saved !== null) {
@@ -196,6 +220,13 @@ export const useAppStore = create<AppState>((set, get) => {
       await loadAll(new LocalFolderProvider(handle, cacheId), true);
     },
 
+    async connectGitHub(cfg) {
+      saveGitHubConfig(cfg);
+      setProviderChoice('github');
+      lastGood.clear();
+      await loadAll(new GitHubProvider(cfg), true);
+    },
+
     async reconnectLocal() {
       const { connection } = get();
       if (connection.state !== 'needs-permission') return;
@@ -205,10 +236,16 @@ export const useAppStore = create<AppState>((set, get) => {
     },
 
     async disconnect() {
-      await clearLocalHandle();
+      const { provider } = get();
+      if (provider.kind === 'local') await clearLocalHandle();
+      if (provider.kind === 'github') clearGitHubConfig();
       setProviderChoice('sample');
       lastGood.clear();
       await loadAll(new SampleProvider(), true);
+    },
+
+    async flushSync() {
+      await controller?.flushNow();
     },
 
     toggleModule(id, done) {
@@ -217,7 +254,8 @@ export const useAppStore = create<AppState>((set, get) => {
       if (!progress.corrupt) {
         localStorage.setItem(mirrorKey(get().provider), serializeProgressState(progress));
       }
-      schedulePersist();
+      const title = get().forest?.registry.get(id)?.def.title ?? id;
+      controller?.notifyChange(done ? title : `uncheck ${title}`);
     },
 
     select(treeId, nodeId) {

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link, Outlet } from 'react-router';
 import { ErrorBanner } from './components/ErrorBanner.tsx';
+import { SyncPill } from './components/SyncPill.tsx';
 import { useAppStore } from './state/store.ts';
 
 export function App() {
@@ -40,6 +41,7 @@ export function App() {
           </span>
         </div>
         <nav className="flex items-center gap-3 text-[13px]">
+          <SyncPill />
           <button
             type="button"
             onClick={() => void reload()}
