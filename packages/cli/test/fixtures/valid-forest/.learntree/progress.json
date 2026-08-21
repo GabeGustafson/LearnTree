@@ -1,0 +1,13 @@
+{
+  "learntree": 1,
+  "modules": {
+    "gone-module": {
+      "state": "done",
+      "at": "2026-07-01T00:00:00.000Z"
+    },
+    "rudin-ch1": {
+      "state": "done",
+      "at": "2026-08-01T00:00:00.000Z"
+    }
+  }
+}

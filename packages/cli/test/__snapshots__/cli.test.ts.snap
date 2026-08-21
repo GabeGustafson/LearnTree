@@ -1,0 +1,23 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`learntree outline > renders the resolved forest deterministically 1`] = `
+"forest "Demo Forest" — 2 tree(s), 3 module(s), 1 equivalence(s) [countSatisfied: complete]
+
+tree calculus "Calculus" — 2 module(s) [trees/calculus.yaml]
+  group limits "Limits"
+    card limits-intro "Introduction"
+      Resources: calc-limits-video*
+      Problems: calc-problems-1(w2)
+    card limits-formal "Formal definitions" (dependsOn: limits-intro)
+      Resources: calc-limits-video*
+
+tree analysis "Real Analysis" — 2 module(s) [trees/analysis.yaml]
+  card foundations "Foundations"
+    Resources: rudin-ch1, calc-limits-video*
+
+equivalences:  (* = module appears in more than one place)
+  analysis-covers-calc: [rudin-ch1] => [calc-limits-video]
+
+progress: 2 module(s) done (2 entries incl. tombstones)
+"
+`;

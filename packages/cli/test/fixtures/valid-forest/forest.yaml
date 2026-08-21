@@ -1,0 +1,9 @@
+learntree: 1
+name: Demo Forest
+settings:
+  countSatisfied: complete
+equivalences:
+  - id: analysis-covers-calc
+    sufficient: [rudin-ch1]
+    satisfies: [calc-limits-video]
+    note: "Rudin's treatment subsumes the intro video."

@@ -1,0 +1,10 @@
+learntree: 1
+id: bad
+title: Bad Tree
+nodes:
+  - id: a
+    titel: Oops
+    categories:
+      - name: Resources
+        modules:
+          - ref: never-defined

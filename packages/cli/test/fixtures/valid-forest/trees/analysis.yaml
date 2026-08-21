@@ -1,0 +1,15 @@
+learntree: 1
+id: analysis
+title: Real Analysis
+order: 20
+nodes:
+  - id: foundations
+    title: Foundations
+    categories:
+      - name: Resources
+        modules:
+          - id: rudin-ch1
+            title: "Rudin — Ch. 1"
+            tag: book
+            section: "Ch. 1"
+          - ref: calc-limits-video

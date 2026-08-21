@@ -1,3 +1,3 @@
-import { CORE_VERSION } from '@learntree/core';
+import { run } from './cli.ts';
 
-console.log(`learntree validator (core ${CORE_VERSION}) — commands arrive in M1`);
+process.exitCode = run(process.argv.slice(2));

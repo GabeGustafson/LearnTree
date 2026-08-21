@@ -9,6 +9,10 @@ await build({
   platform: 'node',
   target: 'node20',
   format: 'esm',
-  banner: { js: '#!/usr/bin/env node' },
+  banner: {
+    // createRequire shim: CJS deps (yaml) require() node builtins, which the
+    // ESM output format does not provide on its own.
+    js: `#!/usr/bin/env node\nimport { createRequire as __createRequire } from 'node:module';\nconst require = __createRequire(import.meta.url);`,
+  },
 });
 console.log('built dist/learntree-validate.mjs');

@@ -1,0 +1,36 @@
+learntree: 1
+id: calculus
+title: Calculus
+order: 10
+description: |
+  A demo tree.
+nodes:
+  - id: limits
+    title: Limits
+    children:
+      - id: limits-intro
+        title: Introduction
+        description: |
+          After this node you can answer: *what is a limit?*
+        categories:
+          - name: Resources
+            modules:
+              - id: calc-limits-video
+                title: Limits video
+                url: "https://example.com/video"
+                tag: video
+                difficulty: easy
+          - name: Problems
+            modules:
+              - id: calc-problems-1
+                title: Problem set 1
+                section: "Ch. 1, problems 1-10"
+                tag: exercise
+                weight: 2
+      - id: limits-formal
+        title: Formal definitions
+        dependsOn: [limits-intro]
+        categories:
+          - name: Resources
+            modules:
+              - ref: calc-limits-video
