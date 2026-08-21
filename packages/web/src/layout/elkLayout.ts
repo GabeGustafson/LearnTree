@@ -1,8 +1,18 @@
-import ELK from 'elkjs/lib/elk.bundled.js';
 import type { NodeId } from '@learntree/core';
 import type { RenderEdge } from './buildRenderGraph.ts';
 
-const elk = new ELK();
+interface ElkInstance {
+  layout(graph: object): Promise<{ children?: Array<{ id: string; x?: number; y?: number }> }>;
+}
+
+// elkjs is ~1.4 MB minified — load it lazily so the initial bundle stays small.
+let elkPromise: Promise<ElkInstance> | null = null;
+function getElk(): Promise<ElkInstance> {
+  elkPromise ??= import('elkjs/lib/elk.bundled.js').then(
+    (m) => new m.default() as ElkInstance,
+  );
+  return elkPromise;
+}
 
 export interface LayoutInput {
   id: NodeId;
@@ -14,6 +24,7 @@ export async function layoutRoots(
   roots: LayoutInput[],
   edges: RenderEdge[],
 ): Promise<Map<NodeId, { x: number; y: number }>> {
+  const elk = await getElk();
   const graph = {
     id: 'forest-tree',
     layoutOptions: {
