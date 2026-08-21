@@ -1,5 +1,5 @@
 import { execFileSync, execSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, test } from 'vitest';
@@ -67,6 +67,73 @@ describe('learntree outline', () => {
     const r = runCli(['outline', validDir]);
     expect(r.status).toBe(0);
     expect(r.stdout).toMatchSnapshot();
+  });
+});
+
+describe('learntree orphan-diff (rename guard)', () => {
+  const treeWith = (moduleLines: string) =>
+    [
+      'learntree: 1',
+      'id: t',
+      'title: T',
+      'nodes:',
+      '  - id: a',
+      '    title: A',
+      '    categories:',
+      '      - name: Resources',
+      '        modules:',
+      moduleLines,
+      '',
+    ].join('\n');
+
+  const PROGRESS = JSON.stringify({
+    learntree: 1,
+    modules: { 'old-name': { state: 'done', at: '2026-08-01T00:00:00.000Z' } },
+  });
+
+  function makeForestDir(root: string, treeYaml: string): string {
+    mkdirSync(join(root, 'trees'), { recursive: true });
+    mkdirSync(join(root, '.learntree'), { recursive: true });
+    writeFileSync(join(root, 'forest.yaml'), 'learntree: 1\nname: F\n');
+    writeFileSync(join(root, 'trees', 't.yaml'), treeYaml);
+    writeFileSync(join(root, '.learntree', 'progress.json'), PROGRESS);
+    return root;
+  }
+
+  const BASE = treeWith(
+    '          - id: old-name\n            title: M\n            url: "https://example.com"',
+  );
+  const RENAMED_NO_ALIAS = treeWith(
+    '          - id: new-name\n            title: M\n            url: "https://example.com"',
+  );
+  const RENAMED_WITH_ALIAS = treeWith(
+    '          - id: new-name\n            title: M\n            url: "https://example.com"\n            aliases: [old-name]',
+  );
+
+  test('rename without alias fails and names the orphaned id', () => {
+    const tmp = mkdtempSync(join(tmpdir(), 'learntree-guard-'));
+    const base = makeForestDir(join(tmp, 'base'), BASE);
+    const head = makeForestDir(join(tmp, 'head'), RENAMED_NO_ALIAS);
+    const r = runCli(['orphan-diff', base, head]);
+    expect(r.status).toBe(1);
+    expect(r.stdout).toContain('old-name');
+    expect(r.stdout).toContain('aliases: [old-name]');
+  });
+
+  test('rename with alias passes', () => {
+    const tmp = mkdtempSync(join(tmpdir(), 'learntree-guard-'));
+    const base = makeForestDir(join(tmp, 'base'), BASE);
+    const head = makeForestDir(join(tmp, 'head'), RENAMED_WITH_ALIAS);
+    const r = runCli(['orphan-diff', base, head]);
+    expect(r.status).toBe(0);
+  });
+
+  test('pre-existing orphans do not block unrelated changes', () => {
+    const tmp = mkdtempSync(join(tmpdir(), 'learntree-guard-'));
+    const base = makeForestDir(join(tmp, 'base'), RENAMED_NO_ALIAS); // already orphaned in base
+    const head = makeForestDir(join(tmp, 'head'), RENAMED_NO_ALIAS);
+    const r = runCli(['orphan-diff', base, head]);
+    expect(r.status).toBe(0);
   });
 });
 

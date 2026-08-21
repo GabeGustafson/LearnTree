@@ -1,0 +1,50 @@
+name: Validate forest
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Validate forest files
+        run: node tools/learntree-validate.mjs validate .
+
+  protect-app-state:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fail if the PR touches .learntree/
+        run: |
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          if git diff --name-only "origin/${{ github.base_ref }}"...HEAD | grep -q '^\.learntree/'; then
+            echo "::error::PRs must not modify .learntree/ — it is app-owned progress state."
+            exit 1
+          fi
+          echo "OK: .learntree/ untouched"
+
+  rename-guard:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: head
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}
+          path: base
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Fail if completed progress would be orphaned (rename without alias)
+        run: node head/tools/learntree-validate.mjs orphan-diff base head

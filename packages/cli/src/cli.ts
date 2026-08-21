@@ -16,9 +16,12 @@ import { renderOutline } from './outline.ts';
 const HELP = `learntree — validate and inspect a LearnTree forest directory
 
 Usage:
-  learntree validate [dir] [--json]     check forest.yaml + trees/ + progress; exit 1 on errors
-  learntree outline  [dir]              print the resolved forest as a text tree
-  learntree emit-schemas <outdir>       write forest/tree/progress JSON Schemas
+  learntree validate [dir] [--json]       check forest.yaml + trees/ + progress; exit 1 on errors
+  learntree outline  [dir]                print the resolved forest as a text tree
+  learntree orphan-diff <base> <head>     fail if <head> orphans completed progress that <base> kept
+                                          (CI rename guard: a module id the user had checked was
+                                          removed/renamed without an alias)
+  learntree emit-schemas <outdir>         write forest/tree/progress JSON Schemas
   learntree help
 
 The directory defaults to the current working directory.
@@ -34,6 +37,18 @@ function loadDir(dir: string) {
     ...progressInfoDiagnostics(forest, progress.state),
   ];
   return { forest, progress: progress.state, diagnostics };
+}
+
+/** Ids with completed progress that no tree (or alias) accounts for. */
+function doneOrphans(dir: string): Set<string> {
+  const { forest, progress } = loadDir(dir);
+  const orphans = new Set<string>();
+  for (const [id, entry] of progress.entries) {
+    if (entry.state !== 'done') continue;
+    if (forest.registry.has(id) || forest.aliasIndex.has(id)) continue;
+    orphans.add(id);
+  }
+  return orphans;
 }
 
 export function run(argv: string[]): number {
@@ -74,6 +89,30 @@ export function run(argv: string[]): number {
         return 1;
       }
       return 0;
+    }
+
+    case 'orphan-diff': {
+      const baseDir = positionals[1];
+      const headDir = positionals[2];
+      if (baseDir === undefined || headDir === undefined) {
+        process.stderr.write('orphan-diff requires <baseDir> and <headDir>\n');
+        return 2;
+      }
+      const before = doneOrphans(resolve(baseDir));
+      const after = doneOrphans(resolve(headDir));
+      const introduced = [...after].filter((id) => !before.has(id)).sort();
+      if (introduced.length === 0) {
+        process.stdout.write('✓ no completed progress is orphaned by this change\n');
+        return 0;
+      }
+      process.stdout.write(
+        `✗ this change orphans completed progress for ${introduced.length} module(s):\n` +
+          introduced.map((id) => `  - ${id}`).join('\n') +
+          `\n\nIf a module was renamed, keep its old id in the new definition's 'aliases' list:\n` +
+          `    aliases: [${introduced[0]}]\n` +
+          `If it was intentionally deleted, note it in the PR description and override this check.\n`,
+      );
+      return 1;
     }
 
     case 'emit-schemas': {

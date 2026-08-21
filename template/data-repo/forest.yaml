@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=schemas/forest.schema.json
+learntree: 1
+name: My Learning Forest
+description: |
+  Created from the LearnTree data-repo template. Replace the example trees
+  with your own — see CLAUDE.md for the full authoring guide.
+
+settings:
+  # How equivalence-satisfied modules count in progress bars:
+  #   complete    – manual (green) and satisfied (grey) both count  (default)
+  #   fractional  – partially-satisfied modules add their coverage fraction
+  #   manual-only – only manual checks count
+  countSatisfied: complete
+
+# Cross-tree sufficiency mappings. Completing ALL modules in `sufficient`
+# grey-checks every module in `satisfies` (chains propagate; partial
+# coverage is shown on the module but does not chain).
+equivalences:
+  - id: strang-covers-3b1b
+    sufficient: [strang-lec1, strang-lec2]
+    satisfies: [essence-la-ep1]
+    note: "Working through Strang's first lectures subsumes the intro video."

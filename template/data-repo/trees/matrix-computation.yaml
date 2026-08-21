@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=../schemas/tree.schema.json
+#
+# Second example: demonstrates sharing a module with another tree via `ref`.
+# Checking it off in either tree completes it everywhere.
+learntree: 1
+id: matrix-computation
+title: "Matrix Computation"
+order: 20
+description: |
+  Applied follow-on. Shares material with the Linear Algebra tree.
+nodes:
+  - id: recap
+    title: "Linear Algebra Recap"
+    categories:
+      - name: Resources
+        modules:
+          # `ref` reuses a module defined anywhere in the forest, verbatim.
+          # A ref entry may contain nothing but `ref`.
+          - ref: strang-lec1
+          - id: matrix-cookbook
+            title: "The Matrix Cookbook"
+            url: "https://www.math.uwaterloo.ca/~hwolkowi/matrixcookbook.pdf"
+            tag: paper
+            difficulty: medium

@@ -1,0 +1,73 @@
+# yaml-language-server: $schema=../schemas/tree.schema.json
+#
+# Example tree exercising every construct. Delete it once you have real trees
+# (deleting is safe: any completed progress is retained invisibly and would
+# return if the ids reappear — see "Iterating on user feedback" in CLAUDE.md).
+# Filename must match `id` (trees/<id>.yaml).
+learntree: 1
+id: linear-algebra
+title: "Linear Algebra"
+order: 10 # dashboard sort key (ascending; omit to sort after ordered trees)
+description: |
+  MIT 18.06-driven linear algebra. **Markdown** works in every description.
+
+nodes:
+  # A description-only card at the top, like a tree introduction.
+  - id: intro
+    title: Introduction
+    display: card # card = standalone box; group = labeled box containing children
+    description: |
+      ### How to consume this tree
+      Top-down, left-to-right. Each card lists the questions you should be
+      able to answer afterwards.
+    children:
+      # Children of a *card* become separate boxes connected by arrows.
+      - id: foundations
+        title: "Foundations"
+        display: group # a group renders its children stacked inside one box
+        children:
+          - id: vectors-and-spaces
+            title: "Vectors & Spaces"
+            description: |
+              After this node you should be able to answer:
+              - What is a vector space? A subspace?
+              - When are vectors linearly independent?
+            categories: # author-defined names; shown as sections in the panel
+              - name: Resources
+                modules:
+                  - id: strang-lec1
+                    title: "Strang — Lecture 1: The Geometry of Linear Equations"
+                    url: "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/"
+                    tag: video # book|video|website|course|paper|exercise|other
+                    difficulty: easy # easy|medium|hard (optional)
+                  - id: essence-la-ep1
+                    title: "3Blue1Brown — Essence of Linear Algebra, ep. 1"
+                    url: "https://www.youtube.com/watch?v=fNk_zzaMoSs"
+                    tag: video
+                    difficulty: easy
+              - name: Problems
+                modules:
+                  - id: strang-pset1
+                    title: "18.06 Problem Set 1"
+                    section: "Problems 1-9" # book/section pointers work without a url
+                    tag: exercise
+                    difficulty: medium
+                    weight: 2 # counts double in progress bars (default 1)
+          - id: elimination
+            title: "Elimination & Matrix Operations"
+            # dependsOn draws an extra (dashed) arrow — same tree only.
+            # Order within a group is already implied top-down; use dependsOn
+            # for cross-branch prerequisites.
+            dependsOn: [vectors-and-spaces]
+            categories:
+              - name: Resources
+                modules:
+                  - id: strang-lec2
+                    title: "Strang — Lecture 2: Elimination with Matrices"
+                    url: "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/"
+                    tag: video
+                    difficulty: easy
+                    # Renamed from an earlier id? List old ids here and the
+                    # user's checkmark follows the module. NEVER rename an id
+                    # without an alias — CI blocks it if progress would be lost.
+                    aliases: [strang-lecture-two]
