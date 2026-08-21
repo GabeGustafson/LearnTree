@@ -10,13 +10,20 @@ public is unrelated — it contains only code.
 ## 2. Mint the token (per GitHub account, once)
 
 GitHub → Settings → Developer settings → Personal access tokens →
-**Fine-grained tokens** → Generate new token:
+**Fine-grained tokens** → Generate new token. **Order matters** — the write
+option only appears after step 2:
 
-- **Repository access:** *Only select repositories* → your data repo.
-- **Permissions → Repository:** *Contents: Read and write* (GitHub adds
-  *Metadata: Read* automatically).
-- Pick an expiration you can live with; the app shows a clear
-  "token rejected" error when it lapses — minting a fresh one takes a minute.
+1. Name it (e.g. `learntree`) and pick an expiration you can live with; the
+   app shows a clear "token rejected" error when it lapses — minting a fresh
+   one takes a minute.
+2. **Repository access:** choose **"Only select repositories"** and pick your
+   data repo. Do *not* choose "Public repositories" — that mode is read-only
+   by design and hides the write permission levels entirely (the usual reason
+   "Read and write" seems to be missing).
+3. Expand **Repository permissions** (not "Account permissions") → find
+   **Contents** → change its dropdown from "No access" to **"Read and
+   write"**. GitHub adds *Metadata: Read-only* by itself.
+4. Generate, and copy the `github_pat_…` value.
 
 ## 3. Connect each device
 

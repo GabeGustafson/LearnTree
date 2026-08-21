@@ -49,9 +49,12 @@ export function ConnectGitHub({ onDone }: { onDone: () => void }) {
         </label>
       </div>
       <p className="text-[12px] text-neutral-500">
-        Create the token at GitHub → Settings → Developer settings → Fine-grained tokens: select{' '}
-        <em>only</em> your data repo, permission <strong>Contents: Read and write</strong>. It is
-        stored in this browser's localStorage and sent only to api.github.com.
+        Create the token at GitHub → Settings → Developer settings → Fine-grained tokens. Under{' '}
+        <em>Repository access</em> choose <strong>“Only select repositories”</strong> → your data
+        repo (not “Public repositories” — that mode is read-only and hides the write levels), then
+        under <em>Repository permissions</em> set <strong>Contents</strong> to{' '}
+        <strong>“Read and write”</strong>. The token is stored in this browser's localStorage and
+        sent only to api.github.com.
       </p>
       <div className="flex items-center gap-2">
         <button
