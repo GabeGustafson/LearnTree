@@ -9,21 +9,28 @@ public is unrelated — it contains only code.
 
 ## 2. Mint the token (per GitHub account, once)
 
-GitHub → Settings → Developer settings → Personal access tokens →
-**Fine-grained tokens** → Generate new token. **Order matters** — the write
-option only appears after step 2:
+**Fastest path** — open this pre-filled link (it sets the name, expiry, and
+*Contents: Read and write* for you):
 
-1. Name it (e.g. `learntree`) and pick an expiration you can live with; the
-   app shows a clear "token rejected" error when it lapses — minting a fresh
-   one takes a minute.
-2. **Repository access:** choose **"Only select repositories"** and pick your
-   data repo. Do *not* choose "Public repositories" — that mode is read-only
-   by design and hides the write permission levels entirely (the usual reason
-   "Read and write" seems to be missing).
-3. Expand **Repository permissions** (not "Account permissions") → find
-   **Contents** → change its dropdown from "No access" to **"Read and
-   write"**. GitHub adds *Metadata: Read-only* by itself.
-4. Generate, and copy the `github_pat_…` value.
+> <https://github.com/settings/personal-access-tokens/new?name=learntree&description=LearnTree+progress+sync&contents=write&expires_in=366>
+
+On that page you only need to set **Repository access → "Only select
+repositories" → your data repo**, then **Generate** and copy the
+`github_pat_…` value.
+
+Doing it manually instead (Settings → Developer settings → Personal access
+tokens → Fine-grained tokens → Generate new token):
+
+1. **Repository access:** "Only select repositories" → your data repo.
+   (Avoid "Public repositories" — that mode is read-only.)
+2. Under **Permissions**, click **"+ Add permissions"** and search for the
+   permission *name*: type **`Contents`**. (The search matches names only —
+   typing "read" or "write" finds nothing.) Tick **Contents**.
+3. Contents now appears as a row under the *Repositories* tab — set its
+   access level to **Read and write** (it defaults to read-only). Metadata
+   (read-only) is included automatically.
+4. Pick an expiration you can live with — the app shows a clear "token
+   rejected" error when it lapses — then **Generate**.
 
 ## 3. Connect each device
 

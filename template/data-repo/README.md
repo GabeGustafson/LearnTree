@@ -6,14 +6,14 @@ YAML learning trees + your completion state, rendered by the LearnTree web app.
 ## Setup (once)
 
 1. **Create your repo from this template** (private is fine — recommended).
-2. **Mint a fine-grained personal access token** for the app:
-   GitHub → Settings → Developer settings → Personal access tokens →
-   Fine-grained tokens → Generate. In this order:
-   - *Repository access*: **"Only select repositories"** → this repo.
-     (Not "Public repositories" — that mode is read-only and hides the
-     write permission levels.)
-   - *Repository permissions* → **Contents** → **"Read and write"**
-     (Metadata: Read-only is added automatically).
+2. **Mint a fine-grained personal access token** for the app. Use this
+   pre-filled link (sets *Contents: Read and write* for you):
+   <https://github.com/settings/personal-access-tokens/new?name=learntree&description=LearnTree+progress+sync&contents=write&expires_in=366>
+   — then just set *Repository access* → **"Only select repositories"** →
+   this repo, and Generate.
+   (Manual route: on the token page click **"+ Add permissions"**, search the
+   permission *name* **`Contents`** — searching "read"/"write" finds
+   nothing — tick it, then set its level to **Read and write**.)
 3. Open the LearnTree app → **Settings → Connect GitHub repo…** → enter
    owner / repo / branch / token → **Test connection** → **Connect**.
    Repeat the token paste on each device (laptop, phone).

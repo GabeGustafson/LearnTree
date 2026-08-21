@@ -49,12 +49,20 @@ export function ConnectGitHub({ onDone }: { onDone: () => void }) {
         </label>
       </div>
       <p className="text-[12px] text-neutral-500">
-        Create the token at GitHub → Settings → Developer settings → Fine-grained tokens. Under{' '}
-        <em>Repository access</em> choose <strong>“Only select repositories”</strong> → your data
-        repo (not “Public repositories” — that mode is read-only and hides the write levels), then
-        under <em>Repository permissions</em> set <strong>Contents</strong> to{' '}
-        <strong>“Read and write”</strong>. The token is stored in this browser's localStorage and
-        sent only to api.github.com.
+        <a
+          href="https://github.com/settings/personal-access-tokens/new?name=learntree&description=LearnTree+progress+sync&contents=write&expires_in=366"
+          target="_blank"
+          rel="noreferrer noopener"
+          className="font-medium text-neutral-700 underline"
+        >
+          Create the token with this pre-filled link ↗
+        </a>{' '}
+        — it sets <strong>Contents: Read and write</strong> for you; on GitHub's page just choose{' '}
+        <em>Repository access</em> → <strong>“Only select repositories”</strong> → your data repo,
+        then Generate. (Manual route: “+ Add permissions” → search the permission name{' '}
+        <code>Contents</code> — searching “read”/“write” finds nothing — then set its level to
+        “Read and write”.) The token is stored in this browser's localStorage and sent only to
+        api.github.com.
       </p>
       <div className="flex items-center gap-2">
         <button
