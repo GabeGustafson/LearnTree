@@ -1,4 +1,5 @@
 import { sortDiagnostics } from '@learntree/core';
+import { localFolderSupported } from '../providers/LocalFolderProvider.ts';
 import { useAppStore } from '../state/store.ts';
 
 const SEVERITY_STYLE = {
@@ -11,18 +12,64 @@ export function SettingsPage() {
   const provider = useAppStore((s) => s.provider);
   const forest = useAppStore((s) => s.forest);
   const diagnostics = useAppStore((s) => s.diagnostics);
+  const switchToSample = useAppStore((s) => s.useSampleProvider);
+  const connectLocal = useAppStore((s) => s.connectLocalFolder);
+  const disconnect = useAppStore((s) => s.disconnect);
+
+  const button =
+    'rounded-md border border-neutral-300 px-3 py-1.5 text-[13px] font-medium hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40';
 
   return (
     <main className="h-full overflow-y-auto px-6 py-6">
       <div className="mx-auto max-w-3xl space-y-8">
         <section>
           <h2 className="text-base font-semibold">Data source</h2>
-          <div className="mt-2 rounded-lg border border-neutral-200 p-4 text-[13px]">
+          <div className="mt-2 space-y-3 rounded-lg border border-neutral-200 p-4 text-[13px]">
             <div>
               Connected to: <span className="font-medium">{provider.label}</span>
             </div>
-            <p className="mt-1 text-neutral-500">
-              Local folder mode (M4) and GitHub sync (M5) arrive in upcoming milestones.
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className={button}
+                disabled={provider.kind === 'sample'}
+                onClick={() => void switchToSample()}
+              >
+                Use sample forest
+              </button>
+              <button
+                type="button"
+                className={button}
+                disabled={!localFolderSupported()}
+                onClick={() => void connectLocal()}
+                title={
+                  localFolderSupported()
+                    ? 'Pick a folder containing forest.yaml and trees/'
+                    : 'Requires a Chromium browser (File System Access API)'
+                }
+              >
+                Open local folder…
+              </button>
+              <button type="button" className={button} disabled title="Arrives in M5">
+                Connect GitHub repo… (soon)
+              </button>
+              {provider.kind !== 'sample' && (
+                <button type="button" className={button} onClick={() => void disconnect()}>
+                  Disconnect
+                </button>
+              )}
+            </div>
+            {!localFolderSupported() && (
+              <p className="text-neutral-500">
+                Local folder mode needs a Chromium browser (Chrome/Edge/Arc). GitHub mode (M5)
+                will work everywhere.
+              </p>
+            )}
+            <p className="text-neutral-500">
+              A forest folder contains <code>forest.yaml</code>, <code>trees/*.yaml</code>, and the
+              app-owned <code>.learntree/progress.json</code>. Edit YAML in your editor (or let an
+              agent do it), then refocus this tab — it reloads automatically without touching your
+              progress.
             </p>
           </div>
         </section>

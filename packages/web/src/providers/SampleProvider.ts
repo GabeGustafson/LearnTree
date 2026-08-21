@@ -13,6 +13,7 @@ const PROGRESS_KEY = 'learntree.sample.progress';
 export class SampleProvider implements StorageProvider {
   readonly kind = 'sample';
   readonly label = 'Sample Forest (demo)';
+  readonly cacheKey = 'sample';
   readonly capabilities = { write: true };
 
   loadForestFiles(): Promise<{ files: SourceFile[]; version: string | null }> {

@@ -4,11 +4,9 @@ import type {
   ModuleId,
   ProgressState,
   ResolvedForest,
-  SourceFile,
 } from '@learntree/core';
 import {
   emptyProgressState,
-  loadForest,
   mergeProgress,
   parseProgressState,
   progressInfoDiagnostics,
@@ -16,100 +14,138 @@ import {
   setModuleState,
   writeThroughAliases,
 } from '@learntree/core';
+import { resolveWithLastGood } from './lastGood.ts';
 import type { StorageProvider } from '../providers/StorageProvider.ts';
+import { LocalFolderProvider, localFolderSupported } from '../providers/LocalFolderProvider.ts';
 import { SampleProvider } from '../providers/SampleProvider.ts';
+import {
+  clearLocalHandle,
+  getProviderChoice,
+  loadLocalHandle,
+  saveLocalHandle,
+  setProviderChoice,
+} from '../providers/settings.ts';
+
+export type Connection =
+  | { state: 'ok' }
+  /** A persisted local-folder handle needs a user-gesture permission grant. */
+  | { state: 'needs-permission'; pending: LocalFolderProvider }
+  | { state: 'error'; detail: string };
 
 export interface AppState {
   provider: StorageProvider;
+  connection: Connection;
   loading: boolean;
   forest: ResolvedForest | null;
-  /** Diagnostics of the latest load attempt plus progress diagnostics. */
   diagnostics: Diagnostic[];
-  /** Files currently rendered from an older, last-good version. */
   staleFiles: string[];
   progress: ProgressState;
   progressVersion: string | null;
   selected: { treeId: string; nodeId: string } | null;
 
-  initialize(provider?: StorageProvider): Promise<void>;
+  initialize(): Promise<void>;
   reload(): Promise<void>;
+  maybeReloadOnFocus(): void;
+  useSampleProvider(): Promise<void>;
+  connectLocalFolder(): Promise<void>;
+  reconnectLocal(): Promise<void>;
+  disconnect(): Promise<void>;
   toggleModule(id: ModuleId, done: boolean): void;
   select(treeId: string, nodeId: string | null): void;
 }
 
-/** Last version of each file that passed parse+schema, per provider label. */
+/** Last version of each file that passed parse+schema (per session). */
 const lastGood = new Map<string, string>();
+let lastLoadAt = 0;
+let persistTimer: ReturnType<typeof setTimeout> | null = null;
 
-function resolveWithLastGood(files: SourceFile[]): {
-  forest: ResolvedForest;
-  diagnostics: Diagnostic[];
-  staleFiles: string[];
-} {
-  const attempt = loadForest(files);
-  let forest = attempt;
-  const staleFiles: string[] = [];
+const FOCUS_RELOAD_MIN_MS = 5_000;
+const PERSIST_DEBOUNCE_MS = 600;
 
-  const substitutable = attempt.quarantinedFiles.filter((p) => lastGood.has(p));
-  if (substitutable.length > 0) {
-    const substituted = files.map((f) =>
-      substitutable.includes(f.path) ? { path: f.path, text: lastGood.get(f.path)! } : f,
-    );
-    forest = loadForest(substituted);
-    staleFiles.push(...substitutable);
-  }
-
-  for (const f of files) {
-    if (!attempt.quarantinedFiles.includes(f.path)) lastGood.set(f.path, f.text);
-  }
-  return { forest, diagnostics: attempt.diagnostics, staleFiles };
+function mirrorKey(provider: StorageProvider): string {
+  return `learntree.progressCache.${provider.cacheKey}`;
 }
 
 export const useAppStore = create<AppState>((set, get) => {
-  async function persist(progress: ProgressState): Promise<void> {
-    const { provider, progressVersion } = get();
+  function flushPersist(): void {
+    if (persistTimer !== null) {
+      clearTimeout(persistTimer);
+      persistTimer = null;
+    }
+    const { provider, progress, progressVersion } = get();
     if (!provider.capabilities.write || progress.corrupt) return;
-    const result = await provider.writeProgress(serializeProgressState(progress), progressVersion);
-    if (result.ok) set({ progressVersion: result.version });
-    // Conflict/error handling is the SyncController's job (M5); the sample and
-    // local providers do not produce conflicts in practice.
+    void provider.writeProgress(serializeProgressState(progress), progressVersion).then((res) => {
+      if (res.ok) set({ progressVersion: res.version });
+    });
   }
 
-  async function loadAll(provider: StorageProvider): Promise<void> {
-    set({ loading: true });
-    const [{ files }, { text: progressText, version }] = await Promise.all([
-      provider.loadForestFiles(),
-      provider.readProgress(),
-    ]);
-    const { forest, diagnostics, staleFiles } = resolveWithLastGood(files);
-    const parsed = parseProgressState(progressText);
+  function schedulePersist(): void {
+    if (persistTimer !== null) clearTimeout(persistTimer);
+    persistTimer = setTimeout(flushPersist, PERSIST_DEBOUNCE_MS);
+  }
 
-    // Merge instead of replace: a reload must never lose an in-memory toggle
-    // that raced the read.
-    const current = get().progress;
-    let progress = current.entries.size > 0 ? mergeProgress(parsed.state, current) : parsed.state;
-
-    const defs = [...forest.registry.values()].map((m) => m.def);
-    const migrated = writeThroughAliases(progress, defs);
-    progress = migrated.state;
-
-    set({
-      provider,
-      loading: false,
-      forest,
-      diagnostics: [
-        ...diagnostics,
-        ...parsed.diagnostics,
-        ...progressInfoDiagnostics(forest, progress),
-      ],
-      staleFiles,
-      progress,
-      progressVersion: version,
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden' && persistTimer !== null) flushPersist();
     });
-    if (migrated.changed) void persist(progress);
+  }
+
+  async function loadAll(provider: StorageProvider, freshProgress: boolean): Promise<void> {
+    set({ loading: true, connection: { state: 'ok' } });
+    try {
+      const [{ files }, { text: progressText, version }] = await Promise.all([
+        provider.loadForestFiles(),
+        provider.readProgress(),
+      ]);
+      const { forest, diagnostics, staleFiles } = resolveWithLastGood(files, lastGood);
+      const parsed = parseProgressState(progressText);
+
+      let progress = parsed.state;
+      // Crash-safety mirror: merges back any toggles that never reached the backend.
+      const mirror = parseProgressState(localStorage.getItem(mirrorKey(provider)));
+      if (!mirror.state.corrupt && !progress.corrupt) {
+        progress = mergeProgress(progress, mirror.state);
+      }
+      // Reloads of the same provider must not lose an in-flight toggle.
+      const current = get().progress;
+      if (!freshProgress && current.entries.size > 0 && !progress.corrupt) {
+        progress = mergeProgress(progress, current);
+      }
+
+      const migrated = writeThroughAliases(
+        progress,
+        [...forest.registry.values()].map((m) => m.def),
+      );
+      progress = migrated.state;
+
+      set({
+        provider,
+        loading: false,
+        forest,
+        diagnostics: [
+          ...diagnostics,
+          ...parsed.diagnostics,
+          ...progressInfoDiagnostics(forest, progress),
+        ],
+        staleFiles,
+        progress,
+        progressVersion: version,
+      });
+      lastLoadAt = Date.now();
+
+      if (!progress.corrupt) {
+        localStorage.setItem(mirrorKey(provider), serializeProgressState(progress));
+        // Backend behind the merged state (crash recovery, alias migration) → write back.
+        if (serializeProgressState(progress) !== (progressText ?? '')) schedulePersist();
+      }
+    } catch (err) {
+      set({ loading: false, connection: { state: 'error', detail: String(err) } });
+    }
   }
 
   return {
     provider: new SampleProvider(),
+    connection: { state: 'ok' },
     loading: true,
     forest: null,
     diagnostics: [],
@@ -118,18 +154,70 @@ export const useAppStore = create<AppState>((set, get) => {
     progressVersion: null,
     selected: null,
 
-    async initialize(provider) {
-      await loadAll(provider ?? get().provider);
+    async initialize() {
+      const choice = getProviderChoice();
+      if (choice === 'local' && localFolderSupported()) {
+        const saved = await loadLocalHandle();
+        if (saved !== null) {
+          const provider = new LocalFolderProvider(saved.handle, saved.cacheId);
+          if (await provider.hasPermission()) {
+            await loadAll(provider, true);
+          } else {
+            set({ loading: false, connection: { state: 'needs-permission', pending: provider } });
+          }
+          return;
+        }
+      }
+      await loadAll(new SampleProvider(), true);
     },
 
     async reload() {
-      await loadAll(get().provider);
+      await loadAll(get().provider, false);
+    },
+
+    maybeReloadOnFocus() {
+      const { loading, connection } = get();
+      if (loading || connection.state !== 'ok') return;
+      if (Date.now() - lastLoadAt < FOCUS_RELOAD_MIN_MS) return;
+      void loadAll(get().provider, false);
+    },
+
+    async useSampleProvider() {
+      setProviderChoice('sample');
+      lastGood.clear();
+      await loadAll(new SampleProvider(), true);
+    },
+
+    async connectLocalFolder() {
+      const handle = await window.showDirectoryPicker({ id: 'learntree', mode: 'readwrite' });
+      const cacheId = await saveLocalHandle(handle);
+      setProviderChoice('local');
+      lastGood.clear();
+      await loadAll(new LocalFolderProvider(handle, cacheId), true);
+    },
+
+    async reconnectLocal() {
+      const { connection } = get();
+      if (connection.state !== 'needs-permission') return;
+      if (await connection.pending.requestPermission()) {
+        await loadAll(connection.pending, true);
+      }
+    },
+
+    async disconnect() {
+      await clearLocalHandle();
+      setProviderChoice('sample');
+      lastGood.clear();
+      await loadAll(new SampleProvider(), true);
     },
 
     toggleModule(id, done) {
       const progress = setModuleState(get().progress, id, done, new Date().toISOString());
       set({ progress });
-      void persist(progress);
+      if (!progress.corrupt) {
+        localStorage.setItem(mirrorKey(get().provider), serializeProgressState(progress));
+      }
+      schedulePersist();
     },
 
     select(treeId, nodeId) {
