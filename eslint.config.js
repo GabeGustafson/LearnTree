@@ -1,5 +1,6 @@
 import js from '@eslint/js';
 import globals from 'globals';
+import reactHooks from 'eslint-plugin-react-hooks';
 import tseslint from 'typescript-eslint';
 
 const NODE_BUILTINS = [
@@ -20,6 +21,8 @@ export default tseslint.config(
   {
     files: ['packages/web/**'],
     languageOptions: { globals: { ...globals.browser } },
+    plugins: { 'react-hooks': reactHooks },
+    rules: reactHooks.configs.recommended.rules,
   },
   {
     // Node contexts: the CLI, build scripts, and tool configs. Core is deliberately

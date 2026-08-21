@@ -1,0 +1,134 @@
+learntree: 1
+id: cpp-basics
+title: "C++ Basics"
+order: 10
+description: |
+  A compact C++ path. **Goal:** be comfortable reading modern C++.
+nodes:
+  - id: intro
+    title: Introduction
+    display: card
+    description: |
+      ### How to consume this tree
+
+      Work **top-down, left-to-right**. Each card lists what you should be able
+      to answer after completing it.
+    children:
+      - id: language
+        title: "C++: Language Basics"
+        display: group
+        children:
+          - id: values-and-types
+            title: Values & Types
+            description: |
+              After this node you should be able to answer:
+
+              - What is the difference between initialization and assignment?
+              - What does `auto` deduce, and when does it surprise you?
+            categories:
+              - name: Resources
+                modules:
+                  - id: tour-of-cpp-ch1
+                    title: "A Tour of C++ — Ch. 1: The Basics"
+                    tag: book
+                    section: "Ch. 1"
+                    difficulty: easy
+                  - id: cpp-crash-course
+                    title: "C++ crash course video"
+                    url: "https://example.com/cpp-crash-course"
+                    tag: video
+                    difficulty: easy
+              - name: Questions
+                modules:
+                  - id: q-init-vs-assign
+                    title: "Initialization vs assignment"
+                    url: "https://example.com/q/init"
+                    tag: exercise
+                    difficulty: medium
+          - id: pointers
+            title: Pointers & References
+            description: |
+              - What is a dangling pointer?
+              - When would you reach for a reference instead?
+            categories:
+              - name: Resources
+                modules:
+                  - id: learncpp-pointers-video
+                    title: "Pointers primer video"
+                    url: "https://example.com/pointers"
+                    tag: video
+                    difficulty: easy
+                  - id: tour-of-cpp-ch1p
+                    title: "A Tour of C++ — Ch. 1.7: Pointers, Arrays, References"
+                    tag: book
+                    section: "Ch. 1.7"
+                    difficulty: medium
+                    weight: 2
+              - name: Problems
+                modules:
+                  - id: p-pointer-kata
+                    title: "Pointer kata (10 exercises)"
+                    url: "https://example.com/kata"
+                    tag: exercise
+                    difficulty: hard
+                    weight: 3
+      - id: stl
+        title: "C++: STL Containers"
+        display: group
+        children:
+          - id: vector
+            title: Vector
+            description: |
+              - What is the time complexity of `push_back`?
+              - How does capacity growth work?
+            categories:
+              - name: Resources
+                modules:
+                  - id: stl-vector-docs
+                    title: "cppreference — std::vector"
+                    url: "https://en.cppreference.com/w/cpp/container/vector"
+                    tag: website
+                    difficulty: easy
+              - name: Questions
+                modules:
+                  - id: q-vector-growth
+                    title: "Vector growth"
+                    url: "https://example.com/q/vector"
+                    tag: exercise
+                    difficulty: medium
+          - id: maps
+            title: Maps
+            categories:
+              - name: Resources
+                modules:
+                  - id: stl-map-docs
+                    title: "cppreference — std::map"
+                    url: "https://en.cppreference.com/w/cpp/container/map"
+                    tag: website
+                    difficulty: easy
+  - id: concurrency
+    title: "C++: Multithreading"
+    display: group
+    dependsOn: [language]
+    children:
+      - id: threads
+        title: Threads & Locks
+        description: |
+          - What does `std::mutex` protect, exactly?
+        categories:
+          - name: Resources
+            modules:
+              - id: cpp-threads-talk
+                title: "Concurrency talk"
+                url: "https://example.com/threads"
+                tag: video
+                difficulty: medium
+                aliases: [cpp-concurrency-talk]
+          - name: Problems
+            modules:
+              - id: p-parallel-sum
+                title: "Parallel sum with std::thread"
+                url: "https://example.com/p/parallel-sum"
+                tag: exercise
+                difficulty: hard
+                weight: 2

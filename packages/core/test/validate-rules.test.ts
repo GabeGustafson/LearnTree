@@ -490,6 +490,21 @@ describe('structure rules', () => {
     });
   });
 
+  test('W-NODE-EMPTY does not fire for description-only cards', () => {
+    const text = y`
+      learntree: 1
+      id: t
+      title: T
+      nodes:
+        - id: intro
+          title: Introduction
+          description: |
+            Welcome.
+    `;
+    const diags = loadForest([FOREST_MIN, tree('t', text)]).diagnostics;
+    expect(diags.filter((d) => d.code === 'W-NODE-EMPTY')).toEqual([]);
+  });
+
   test('W-TREE-ID-FILENAME-MISMATCH', () => {
     expectDiag([FOREST_MIN, { path: 'trees/other.yaml', text: VALID_MODULE }], {
       code: 'W-TREE-ID-FILENAME-MISMATCH',

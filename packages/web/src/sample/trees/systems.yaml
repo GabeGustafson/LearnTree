@@ -1,0 +1,70 @@
+learntree: 1
+id: systems
+title: "Operating Systems"
+order: 20
+description: |
+  OSTEP-driven systems fundamentals. Shares material with the C++ tree —
+  notice the grey checkmarks appearing as you complete things here.
+nodes:
+  - id: intro
+    title: Introduction
+    display: card
+    description: |
+      Based on *Operating Systems: Three Easy Pieces*. Do not skip the asides.
+    children:
+      - id: virtualization
+        title: "Virtualization"
+        display: group
+        children:
+          - id: processes
+            title: The Process
+            description: |
+              - What are the three process states?
+              - Which data structure stores PCBs?
+            categories:
+              - name: Resources
+                modules:
+                  - id: ostep-processes
+                    title: "OSTEP — Ch. 4: Processes"
+                    url: "https://pages.cs.wisc.edu/~remzi/OSTEP/cpu-intro.pdf"
+                    tag: book
+                    section: "Ch. 4"
+                    difficulty: easy
+              - name: Questions
+                modules:
+                  - id: q-process-states
+                    title: "Process states"
+                    url: "https://example.com/q/process-states"
+                    tag: exercise
+                    difficulty: easy
+          - id: address-spaces
+            title: Address Spaces
+            categories:
+              - name: Resources
+                modules:
+                  - id: ostep-address-spaces
+                    title: "OSTEP — Ch. 13: Address Spaces"
+                    url: "https://pages.cs.wisc.edu/~remzi/OSTEP/vm-intro.pdf"
+                    tag: book
+                    section: "Ch. 13"
+                    difficulty: medium
+                  - id: ostep-paging-intro
+                    title: "OSTEP — Ch. 18: Introduction to Paging"
+                    url: "https://pages.cs.wisc.edu/~remzi/OSTEP/vm-paging.pdf"
+                    tag: book
+                    section: "Ch. 18"
+                    difficulty: medium
+                    weight: 2
+      - id: cpp-for-systems
+        title: "C++ for Systems"
+        display: group
+        children:
+          - id: cpp-refresher
+            title: Language Refresher
+            description: |
+              Reuses the exact same module as the C++ tree — checking it in
+              either place completes it everywhere.
+            categories:
+              - name: Resources
+                modules:
+                  - ref: tour-of-cpp-ch1

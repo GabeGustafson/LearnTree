@@ -101,8 +101,13 @@ export function resolveTree(parsed: ParsedYaml, data: TreeFileIn): TreeResolutio
       walkNode(child, [...path, 'children', i]),
     );
 
-    if (categories.length === 0 && children.length === 0) {
-      diag('warning', 'W-NODE-EMPTY', `node '${input.id}' has no categories and no children`, path);
+    if (categories.length === 0 && children.length === 0 && input.description === undefined) {
+      diag(
+        'warning',
+        'W-NODE-EMPTY',
+        `node '${input.id}' has no categories, children, or description`,
+        path,
+      );
     }
 
     for (const [di, target] of (input.dependsOn ?? []).entries()) {

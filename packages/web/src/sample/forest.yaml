@@ -1,0 +1,14 @@
+learntree: 1
+name: Sample Forest
+description: |
+  A bundled demo so you can explore LearnTree before connecting your own data.
+settings:
+  countSatisfied: complete
+equivalences:
+  - id: systems-mem-covers-pointers
+    sufficient: [ostep-address-spaces, ostep-paging-intro]
+    satisfies: [learncpp-pointers-video]
+    note: "Working through OSTEP's memory chapters subsumes the pointers primer."
+  - id: cpp-book-covers-tour
+    sufficient: [tour-of-cpp-ch1]
+    satisfies: [cpp-crash-course]
