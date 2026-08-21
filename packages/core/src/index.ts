@@ -1,3 +1,15 @@
+export { computeStatuses } from './engine/status.ts';
+export type { ModuleStatus, StatusMap } from './engine/status.ts';
+export { forestSummary, rollup, treeSummary } from './engine/rollup.ts';
+export type { CategoryStats, ForestSummary, ScopeStats, TreeSummary } from './engine/rollup.ts';
+export {
+  effectiveEntry,
+  isDone,
+  laterEntry,
+  setModuleState,
+  writeThroughAliases,
+} from './progress/entries.ts';
+export { mergeProgress } from './progress/merge.ts';
 export { loadForest, FOREST_FILE, TREE_FILE_RE } from './loadForest.ts';
 export type {
   Equivalence,
