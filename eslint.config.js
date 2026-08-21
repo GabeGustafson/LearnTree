@@ -9,7 +9,15 @@ const NODE_BUILTINS = [
 ];
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/coverage/**', '**/node_modules/**'] },
+  {
+    ignores: [
+      '**/dist/**',
+      '**/coverage/**',
+      '**/node_modules/**',
+      // committed build artifact (refreshed by scripts/refresh-template.mjs)
+      'template/data-repo/tools/**',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
@@ -29,6 +37,12 @@ export default tseslint.config(
     // excluded — it gets no environment globals at all.
     files: ['packages/cli/**', '**/*.mjs', '**/vite.config.ts', '**/vitest.config.ts'],
     languageOptions: { globals: { ...globals.node } },
+  },
+  {
+    // Playwright drivers run Node-side but their page.evaluate/addInitScript
+    // callbacks execute in the browser.
+    files: ['scripts/dev-drive*.mjs'],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
   },
   {
     // @learntree/core must run identically in browser, worker, and Node: no platform imports.
