@@ -1,7 +1,7 @@
 # LearnTree
 
-A personal learning-progress tracker in the style of getcracked.io's progress
-trees, built to be **agent-authored**: AI agents (e.g. Claude Code) write YAML
+A personal learning-progress tracker built around interactive progress trees,
+designed to be **agent-authored**: AI agents (e.g. Claude Code) write YAML
 learning trees in a data repo; LearnTree renders them as pan/zoom trees with
 per-module checkboxes, weighted progress bars, and cross-tree equivalences —
 and tracks your completion without ever losing it to a content edit.
