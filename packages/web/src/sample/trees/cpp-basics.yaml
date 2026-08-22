@@ -106,6 +106,29 @@ nodes:
                     url: "https://en.cppreference.com/w/cpp/container/map"
                     tag: website
                     difficulty: easy
+  - id: modern-idioms
+    title: "C++: Modern Idioms"
+    display: group
+    dependsOn: [language, stl]
+    children:
+      - id: raii-and-moves
+        title: "RAII & Move Semantics"
+        description: |
+          - What does the rule of five ask of you, and when is the rule of zero better?
+        categories:
+          - name: Resources
+            modules:
+              - id: effective-cpp-items
+                title: "Effective Modern C++ — selected items"
+                tag: book
+                section: "Items 1, 5, 7, 11, 14, 17, 23, 24, 25, 29, 41; skim 18-22 (smart pointers) and re-do the Item 25 exercises after the move-semantics video"
+                difficulty: medium
+                weight: 2
+              - id: back-to-basics-move
+                title: "CppCon Back to Basics: Move Semantics"
+                url: "https://example.com/move-semantics"
+                tag: video
+                difficulty: medium
   - id: concurrency
     title: "C++: Multithreading"
     display: group

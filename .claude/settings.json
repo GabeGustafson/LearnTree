@@ -2,7 +2,35 @@
   "permissions": {
     "allow": [
       "Skill(update-config)",
-      "Skill(update-config:*)"
+      "Skill(update-config:*)",
+      "Read(//Users/gabriel/General/Learning/Personal_Projects/learntree-data-repo/.claude/**)",
+      "Bash(node tools/learntree-validate.mjs *)",
+      "Bash(node /Users/gabriel/General/Learning/Personal_Projects/learntree-data-repo/tools/learntree-validate.mjs *)",
+      "Bash(node --version)",
+      "Bash(node -v)",
+      "WebFetch",
+      "WebSearch",
+      "Bash(pdftoppm *)",
+      "Bash(pdftotext *)",
+      "Bash(grep *)",
+      "Bash(rg *)",
+      "Bash(find *)",
+      "Bash(sed *)",
+      "Bash(awk *)",
+      "Bash(cat *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(ls *)",
+      "Bash(wc *)",
+      "Bash(sort *)",
+      "Bash(uniq *)",
+      "Bash(cut *)",
+      "Bash(tr *)",
+      "Bash(diff *)",
+      "Bash(jq *)",
+      "Bash(echo *)",
+      "Bash(which *)",
+      "Bash(file *)"
     ],
     "additionalDirectories": [
       "/Users/gabriel/.claude"

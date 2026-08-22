@@ -58,10 +58,14 @@ export function NodeDetailPanel({ node, forest, statuses, onToggle, onClose }: P
                 const { def } = module;
                 const status = statuses.get(id) ?? { kind: 'none' as const };
                 return (
-                  <li key={id} className="flex items-center gap-2.5 px-2.5 py-2">
-                    <StatusCheckbox status={status} onToggle={(done) => onToggle(id, done)} />
+                  // items-start + mt on the checkbox: rows grow with wrapped
+                  // text while the checkbox stays on the first line.
+                  <li key={id} className="flex items-start gap-2.5 px-2.5 py-2">
+                    <span className="mt-[1px]">
+                      <StatusCheckbox status={status} onToggle={(done) => onToggle(id, done)} />
+                    </span>
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-[13px] text-neutral-900">
+                      <div className="break-words text-[13px] leading-snug text-neutral-900">
                         {def.url !== undefined ? (
                           <a
                             href={def.url}
@@ -75,29 +79,35 @@ export function NodeDetailPanel({ node, forest, statuses, onToggle, onClose }: P
                           def.title
                         )}
                       </div>
+                      {/* Section/exercise lists wrap in full — verbosity is
+                          content here, never hidden behind an ellipsis. */}
                       {def.section !== undefined && (
-                        <div className="truncate text-[11px] text-neutral-500">{def.section}</div>
+                        <div className="mt-0.5 break-words text-[11px] leading-snug text-neutral-500">
+                          {def.section}
+                        </div>
                       )}
                     </div>
-                    {def.weight !== 1 && (
-                      <span className="text-[10px] text-neutral-400" title="Progress weight">
-                        ×{def.weight}
-                      </span>
-                    )}
-                    {def.tag !== undefined && (
-                      <span
-                        className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${TAG_STYLES[def.tag] ?? TAG_STYLES['other']}`}
-                      >
-                        {def.tag}
-                      </span>
-                    )}
-                    {def.difficulty !== undefined && (
-                      <span
-                        className={`text-[10px] font-medium ${DIFFICULTY_STYLES[def.difficulty] ?? ''}`}
-                      >
-                        {def.difficulty}
-                      </span>
-                    )}
+                    <span className="mt-[2px] flex shrink-0 items-center gap-1.5">
+                      {def.weight !== 1 && (
+                        <span className="text-[10px] text-neutral-400" title="Progress weight">
+                          ×{def.weight}
+                        </span>
+                      )}
+                      {def.tag !== undefined && (
+                        <span
+                          className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${TAG_STYLES[def.tag] ?? TAG_STYLES['other']}`}
+                        >
+                          {def.tag}
+                        </span>
+                      )}
+                      {def.difficulty !== undefined && (
+                        <span
+                          className={`text-[10px] font-medium ${DIFFICULTY_STYLES[def.difficulty] ?? ''}`}
+                        >
+                          {def.difficulty}
+                        </span>
+                      )}
+                    </span>
                   </li>
                 );
               })}
